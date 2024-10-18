@@ -1,4 +1,5 @@
 ﻿using BancoChu.Domain.Entidades;
+using BancoChu.Domain.Interfaces.Handlers;
 using BancoChu.Dto.Commands;
 using BancoChu.Dto.Responses;
 using BancoChu.Infra;
@@ -12,51 +13,20 @@ namespace BancoChu.Api.Controllers;
 public class TransacoesController : ControllerBase
 {
     private readonly BancoChuContext _context;
+    private readonly ITransacoesHandler _handler;
 
-    public TransacoesController(BancoChuContext context)
+    public TransacoesController(BancoChuContext context,
+        ITransacoesHandler handler)
     {
         _context = context;
+        _handler = handler;
     }
 
     [HttpPost]
     public async Task<IActionResult> RealizarTransacao([FromBody] TransacaoCommand command)
     {
-        // Pega a conta sem fazer tracking.
-        var contaOrigem = await _context.Contas
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == command.ContaOrigemId);
-
-        var contaDestino = await _context.Contas
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == command.ContaDestinoId);
-
-        if (contaOrigem is null || contaDestino is null)
-            return NotFound("ContaOrigem não encontrada");
-
-        if (contaOrigem.TemSaldoSuficiente(command.Valor))
-            return BadRequest("Saldo insuficiente");
-
-        // Atualiza o saldo das contas
-        contaOrigem.Saldo += -command.Valor;
-        contaDestino.Saldo += command.Valor;
-
-        // Anexa as contas ao contexto para serem modificados
-        _context.Entry(contaOrigem).State = EntityState.Modified;
-        _context.Entry(contaDestino).State = EntityState.Modified;
-
-        Transacao transacao = new(
-            command.ContaOrigemId,
-            contaOrigem,
-            command.ContaDestinoId,
-            contaDestino,
-            command.Valor,
-            command.DataTransacao);
-
-        // Adiciona e salva a transacao
-        _context.Transacoes.Add(transacao);
-        await _context.SaveChangesAsync();
-
-        return Ok(new TransacaoResponse(transacao.ContaOrigemId, transacao.ContaDestinoId, transacao.Valor, transacao.DataFormatada));
+        var result = await _handler.Handle(command);
+        return Ok(result);
     }
 
     [HttpGet("extrato")]
