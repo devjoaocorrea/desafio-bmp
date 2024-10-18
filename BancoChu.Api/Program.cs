@@ -1,3 +1,4 @@
+using BancoChu.App;
 using BancoChu.Infra;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,6 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Aplica injecoes de dependencia
+builder.Services.AddServices();
 
 builder.Services.AddDbContext<BancoChuContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SqliteConnectionString")));
