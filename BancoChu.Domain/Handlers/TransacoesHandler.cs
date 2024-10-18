@@ -3,6 +3,7 @@ using BancoChu.Domain.Interfaces.Handlers;
 using BancoChu.Domain.Interfaces.Repositories;
 using BancoChu.Dto.Commands;
 using BancoChu.Dto.Responses;
+using System.Net.Http.Json;
 
 namespace BancoChu.Domain.Handlers;
 
@@ -17,22 +18,34 @@ public class TransacoesHandler : ITransacoesHandler
 		_repository = repository;
 		_contasRepository = contasRepository;
 	}
-	
+
 	public async Task<TransacaoResponse> Handle(TransacaoCommand command)
 	{
-		// Pega a conta sem fazer tracking.
+		// Busca a conta sem fazer tracking
 		var contaOrigem = await _contasRepository.BuscarPorIdAsync(command.ContaOrigemId);
 		
 		if (contaOrigem is null)
+		{
 			return new TransacaoResponse(false, "Conta origem não encontrada");
+		}
 		
 		var contaDestino = await _contasRepository.BuscarPorIdAsync(command.ContaDestinoId);
 
 		if (contaDestino is null)
+		{
 			return new TransacaoResponse(false, "Conta destino não encontrada");
+		}
 		
 		if (!contaOrigem.TemSaldoSuficiente(command.Valor))
+		{
 			return new TransacaoResponse(false, "Saldo insuficiente");
+		}
+
+		// Verifica se a data esta valida para fazer a transacao
+		if (!await IsDataTransacaoValida(command.DataTransacao))
+		{
+			return new TransacaoResponse(false, "A transação deve ser feita em dias úteis");
+		}
 
 		// Atualiza o saldo das contas
 		contaOrigem.Saldo += -command.Valor;
@@ -59,4 +72,30 @@ public class TransacoesHandler : ITransacoesHandler
 		
 		return new TransacaoResponse(transacao.ContaOrigemId, transacao.ContaDestinoId, transacao.Valor, transacao.DataFormatada);
 	}
+
+	private async Task<bool> IsDataTransacaoValida(DateTime dataTransacao)
+	{
+		if (dataTransacao.DayOfWeek == DayOfWeek.Sunday || dataTransacao.DayOfWeek == DayOfWeek.Saturday)
+		{
+			return false;
+		}
+
+		var url = $"https://brasilapi.com.br/api/feriados/v1/{dataTransacao.Year}";
+
+		using var client = new HttpClient();
+		var response = await client.GetAsync(url);
+
+		if (!response.IsSuccessStatusCode)
+		{
+			throw new Exception("Não foi possível obter informações de feriados.");
+		}
+
+		var feriados = await response.Content.ReadFromJsonAsync<List<Feriado>>()
+			?? throw new Exception("Falha ao obter lista de feriados.");
+
+		// Verifica se a data da transacao esta em um feriado
+		return !feriados.Any(feriado => DateTime.Parse(feriado.date) == dataTransacao.Date);
+	}
+
+	private record Feriado(string date, string name);
 }
