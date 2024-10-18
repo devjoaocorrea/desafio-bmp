@@ -1,10 +1,11 @@
-﻿using BancoChu.Domain.Entidades;
+﻿using BancoChu.App.Caching;
 using BancoChu.Domain.Interfaces.Handlers;
+using BancoChu.Domain.Interfaces.Repositories;
 using BancoChu.Dto.Commands;
 using BancoChu.Dto.Responses;
 using BancoChu.Infra;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace BancoChu.Api.Controllers;
 
@@ -12,14 +13,21 @@ namespace BancoChu.Api.Controllers;
 [Route("api/[controller]")]
 public class TransacoesController : ControllerBase
 {
+    private readonly IMemoryCache _cache;
     private readonly BancoChuContext _context;
     private readonly ITransacoesHandler _handler;
+    private readonly ITransacoesRepository _repository;
 
-    public TransacoesController(BancoChuContext context,
-        ITransacoesHandler handler)
+    public TransacoesController(
+        IMemoryCache cache,
+        BancoChuContext context,
+        ITransacoesHandler handler,
+        ITransacoesRepository repository)
     {
+        _cache = cache;
         _context = context;
         _handler = handler;
+        _repository = repository;
     }
 
     [HttpPost]
@@ -32,40 +40,38 @@ public class TransacoesController : ControllerBase
     [HttpGet("extrato")]
     public async Task<IActionResult> ObterTransacoesPorPeriodo(string dataInicio, string dataFim)
     {
-        // Valida se o formato da data inserida está correta e declara variáveis
-        if (!DateOnly.TryParseExact(dataInicio, "dd-MM-yyyy", null, System.Globalization.DateTimeStyles.None, out var startDate) ||
-            !DateOnly.TryParseExact(dataFim, "dd-MM-yyyy", null, System.Globalization.DateTimeStyles.None, out var endDate))
+        if (!_cache.TryGetValue(CacheKeys.Extrato, out List<TransacaoResponse> extratos))
         {
-            return BadRequest("Datas devem estar no formato dd-MM-aaaa");
+            // Valida se o formato da data inserida está correta e declara variáveis
+            if (!DateOnly.TryParseExact(dataInicio, "dd-MM-yyyy", null, System.Globalization.DateTimeStyles.None,
+                    out var startDate) ||
+                !DateOnly.TryParseExact(dataFim, "dd-MM-yyyy", null, System.Globalization.DateTimeStyles.None,
+                    out var endDate))
+            {
+                return BadRequest("Datas devem estar no formato dd-MM-aaaa");
+            }
+
+            if (startDate > endDate)
+                return BadRequest("DataTransacao inicial não pode ser maior que a final");
+
+            var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
+            var endDateTime = endDate.ToDateTime(TimeOnly.MaxValue);
+
+            var transacoes = await _repository.BuscarTransacoesPorPeriodo(startDateTime, endDateTime);
+
+            if (!transacoes.Any())
+                return NotFound("Nenhuma transação realizada nesse período");
+
+            extratos = new List<TransacaoResponse>();
+
+            transacoes.ForEach(c =>
+                extratos.Add(new TransacaoResponse(c.ContaOrigemId, c.ContaDestinoId, c.Valor, c.DataFormatada)));
+
+            _cache.Set(CacheKeys.Extrato, extratos,
+                new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromSeconds(60)));
         }
 
-        if (startDate > endDate)
-            return BadRequest("DataTransacao inicial não pode ser maior que a final");
-
-        var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
-        var endDateTime = endDate.ToDateTime(TimeOnly.MaxValue);
-
-        var transacoes = await _context.Transacoes
-            .Include(t => t.ContaOrigem)
-            .Include(t => t.ContaDestino)
-            .Where(t => t.Data >= startDateTime && t.Data <= endDateTime)
-            .ToListAsync();
-
-        if (!transacoes.Any())
-            return NotFound("Nenhuma transação realizada nesse período");
-
-        var response = new List<TransacaoResponse>();
-
-        transacoes.ForEach(c => response.Add(new TransacaoResponse(c.ContaOrigemId, c.ContaDestinoId, c.Valor, c.DataFormatada)));
-
-        return Ok(response);
-    }
-
-    [HttpGet("todos-extratos")]
-    public async Task<IActionResult> ObterTransacoes()
-    {
-        var transacoes = await _context.Transacoes.ToListAsync();
-
-        return Ok(transacoes);
+        return Ok(extratos);
     }
 }

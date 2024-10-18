@@ -8,6 +8,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Cache
+builder.Services.AddMemoryCache();
+
 // Aplica injecoes de dependencia
 builder.Services.AddServices();
 
