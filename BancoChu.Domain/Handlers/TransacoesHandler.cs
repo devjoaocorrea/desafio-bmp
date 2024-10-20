@@ -23,28 +23,28 @@ public class TransacoesHandler : ITransacoesHandler
 	{
 		// Busca a conta sem fazer tracking
 		var contaOrigem = await _contasRepository.BuscarPorIdAsync(command.ContaOrigemId);
-		
+
 		if (contaOrigem is null)
 		{
-			return new TransacaoResponse(false, "Conta origem não encontrada");
+			return InvalidResponse("Conta origem não encontrada");
 		}
-		
+
 		var contaDestino = await _contasRepository.BuscarPorIdAsync(command.ContaDestinoId);
 
 		if (contaDestino is null)
 		{
-			return new TransacaoResponse(false, "Conta destino não encontrada");
+			return InvalidResponse("Conta destino não encontrada");
 		}
-		
+
 		if (!contaOrigem.TemSaldoSuficiente(command.Valor))
 		{
-			return new TransacaoResponse(false, "Saldo insuficiente");
+			InvalidResponse("Saldo insuficiente");
 		}
 
 		// Verifica se a data esta valida para fazer a transacao
 		if (!await IsDataTransacaoValida(command.DataTransacao))
 		{
-			return new TransacaoResponse(false, "A transação deve ser feita em dias úteis");
+			return InvalidResponse("A transação deve ser feita em dias úteis");
 		}
 
 		// Atualiza o saldo das contas
@@ -58,7 +58,7 @@ public class TransacoesHandler : ITransacoesHandler
 			contaDestino
 		};
 		await _contasRepository.AtualizarSaldos(contas);
-		
+
 		Transacao transacao = new(
 			command.ContaOrigemId,
 			contaOrigem,
@@ -69,11 +69,22 @@ public class TransacoesHandler : ITransacoesHandler
 
 		// Adiciona e salva a transacao
 		await _repository.SalvarTransacao(transacao);
-		
-		return new TransacaoResponse(transacao.ContaOrigemId, transacao.ContaDestinoId, transacao.Valor, transacao.DataFormatada);
+
+		return new TransacaoResponse
+		{
+			IsOk = true,
+			Mensagem = "Transferência realizada com sucesso!",
+			ContaOrigemId = transacao.ContaOrigemId,
+			ContaDestinoId = transacao.ContaDestinoId,
+			DataTransacao = transacao.DataFormatada,
+			Valor = transacao.Valor
+		};
 	}
 
-	private async Task<bool> IsDataTransacaoValida(DateTime dataTransacao)
+	private static TransacaoResponse InvalidResponse(string reason)
+		=> new() { IsOk = false, Mensagem = reason };
+
+	private static async Task<bool> IsDataTransacaoValida(DateTime dataTransacao)
 	{
 		if (dataTransacao.DayOfWeek == DayOfWeek.Sunday || dataTransacao.DayOfWeek == DayOfWeek.Saturday)
 		{

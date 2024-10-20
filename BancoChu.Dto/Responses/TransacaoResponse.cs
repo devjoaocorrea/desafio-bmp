@@ -2,20 +2,6 @@
 
 public class TransacaoResponse
 {
-    public TransacaoResponse(Guid contaOrigemId, Guid contaDestinoId, decimal valor, string dataTransacao)
-    {
-        ContaOrigemId = contaOrigemId;
-        ContaDestinoId = contaDestinoId;
-        Valor = valor;
-        DataTransacao = dataTransacao;
-    }
-
-    public TransacaoResponse(bool isOk, string mensagem)
-    {
-        IsOk = isOk;
-        Mensagem = mensagem;
-    }
-
     public bool IsOk { get; set; }
     public string Mensagem { get; set; }
 

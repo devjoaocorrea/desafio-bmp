@@ -20,6 +20,8 @@ public class Transacao : EntidadeBase
     public Conta ContaDestino { get; init; }
     public decimal Valor { get; init; }
     public DateTime Data { get; init; }
+    public string Mensagem { get; set; }
+    public bool Sucesso { get; set; }
     
     public string DataFormatada => Data.ToString("dd/MM/yyyy HH:mm:ss");
 }
