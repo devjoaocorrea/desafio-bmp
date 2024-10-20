@@ -1,6 +1,7 @@
 ﻿using BancoChu.Domain.Entidades;
 using BancoChu.Dto.Commands;
 using BancoChu.Infra;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,10 +12,13 @@ namespace BancoChu.Api.Controllers;
 public class ContasController : ControllerBase
 {
     private readonly BancoChuContext _context;
+    private readonly IValidator<Conta> _validator;
 
-    public ContasController(BancoChuContext context)
+    public ContasController(BancoChuContext context,
+        IValidator<Conta> validator)
     {
         _context = context;
+        _validator = validator;
     }
 
     [HttpPost]
@@ -26,10 +30,17 @@ public class ContasController : ControllerBase
             command.Titular,
             command.Saldo);
 
+        var result = _validator.Validate(conta);
+
+        if (!result.IsValid)
+        {
+            return BadRequest(result.Errors);
+        }
+
         _context.Contas.Add(conta);
         await _context.SaveChangesAsync();
 
-        return Ok(conta.Id);
+        return Ok("Conta criada com sucesso!");
     }
 
     [HttpGet("{id:guid}")]

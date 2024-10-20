@@ -4,6 +4,7 @@ using BancoChu.Domain.Interfaces.Repositories;
 using BancoChu.Dto.Commands;
 using BancoChu.Dto.Responses;
 using BancoChu.Infra;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -17,57 +18,57 @@ public class TransacoesController : ControllerBase
 	private readonly BancoChuContext _context;
 	private readonly ITransacoesHandler _handler;
 	private readonly ITransacoesRepository _repository;
+	private readonly IValidator<TransacaoCommand> _validator;
 
 	public TransacoesController(
 		IMemoryCache cache,
 		BancoChuContext context,
 		ITransacoesHandler handler,
-		ITransacoesRepository repository)
+		ITransacoesRepository repository,
+		IValidator<TransacaoCommand> validator)
+
 	{
 		_cache = cache;
 		_context = context;
 		_handler = handler;
+		_validator = validator;
 		_repository = repository;
 	}
 
 	[HttpPost]
 	public async Task<IActionResult> RealizarTransacao([FromBody] TransacaoCommand command)
 	{
+		var validation = _validator.Validate(command);
+
+		if (!validation.IsValid)
+		{
+			return BadRequest(validation.Errors);
+		}
+
 		var result = await _handler.Handle(command);
 		return Ok(result);
 	}
 
 	[HttpGet("extrato")]
-	public async Task<IActionResult> ObterTransacoesPorPeriodo(string dataInicio, string dataFim)
+	public async Task<IActionResult> ObterTransacoesPorPeriodo(DateTime dataInicio, DateTime dataFim)
 	{
 		if (!_cache.TryGetValue(CacheKeys.Extrato, out List<TransacaoResponse> transacoes))
 		{
-			// Valida se o formato da data inserida está correta e declara variáveis
-			if (!DateOnly.TryParseExact(dataInicio, "dd-MM-yyyy", null, System.Globalization.DateTimeStyles.None, out var startDate)
-				|| !DateOnly.TryParseExact(dataFim, "dd-MM-yyyy", null, System.Globalization.DateTimeStyles.None, out var endDate))
-			{
-				return BadRequest("Datas devem estar no formato dd-MM-aaaa");
-			}
-
-			if (startDate > endDate)
+			if (dataInicio > dataFim)
 			{
 				return BadRequest("A data inicial não pode ser maior que a final");
 			}
 
-			var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
-			var endDateTime = endDate.ToDateTime(TimeOnly.MaxValue);
+			dataInicio = DateTime.SpecifyKind(dataInicio, DateTimeKind.Utc);
+			dataFim = DateTime.SpecifyKind(dataFim, DateTimeKind.Utc);
+			dataFim = dataFim.AddDays(1).AddTicks(-1);
 
-			var transacoesDoPeriodo = await _repository.BuscarTransacoesPorPeriodo(startDateTime, endDateTime);
+			var transacoesDoPeriodo = await _repository.BuscarTransacoesPorPeriodo(dataInicio, dataFim);
 
 			if (!transacoesDoPeriodo.Any())
 			{
 				return NotFound("Nenhuma transação realizada nesse período");
 			}
-
-			transacoes = new List<TransacaoResponse>();
-
-			transacoesDoPeriodo.ForEach(c =>
-				transacoes.Add(new TransacaoResponse(c.ContaOrigemId, c.ContaDestinoId, c.Valor, c.DataFormatada)));
 
 			_cache.Set(CacheKeys.Extrato, transacoes,
 				new MemoryCacheEntryOptions()
