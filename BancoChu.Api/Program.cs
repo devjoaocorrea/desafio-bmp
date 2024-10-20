@@ -1,4 +1,5 @@
 using BancoChu.App;
+using BancoChu.App.Extensions;
 using BancoChu.Infra;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,22 +16,15 @@ builder.Services.AddMemoryCache();
 builder.Services.AddServices();
 
 builder.Services.AddDbContext<BancoChuContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("SqliteConnectionString")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));
 
 var app = builder.Build();
-
-// Executa as migracoes ao executar a aplicacao caso nao exista ainda no ambiente.
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<BancoChuContext>();
-    await context.Database.MigrateAsync();
-}
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.ApplyMigrations();
 }
 
 app.UseHttpsRedirection();

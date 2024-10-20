@@ -13,11 +13,11 @@ namespace BancoChu.Infra.Migrations
                 name: "Contas",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    NumeroConta = table.Column<string>(type: "TEXT", nullable: false),
-                    Agencia = table.Column<string>(type: "TEXT", nullable: false),
-                    Titular = table.Column<string>(type: "TEXT", nullable: false),
-                    Saldo = table.Column<decimal>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    NumeroConta = table.Column<string>(type: "text", nullable: false),
+                    Agencia = table.Column<string>(type: "text", nullable: false),
+                    Titular = table.Column<string>(type: "text", nullable: false),
+                    Saldo = table.Column<decimal>(type: "numeric", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -28,11 +28,11 @@ namespace BancoChu.Infra.Migrations
                 name: "Transacoes",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ContaOrigemId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ContaDestinoId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Valor = table.Column<decimal>(type: "TEXT", nullable: false),
-                    Data = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaOrigemId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ContaDestinoId = table.Column<Guid>(type: "uuid", nullable: false),
+                    Valor = table.Column<decimal>(type: "numeric", nullable: false),
+                    Data = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -42,13 +42,13 @@ namespace BancoChu.Infra.Migrations
                         column: x => x.ContaDestinoId,
                         principalTable: "Contas",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Transacoes_Contas_ContaOrigemId",
                         column: x => x.ContaOrigemId,
                         principalTable: "Contas",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateIndex(
@@ -57,9 +57,9 @@ namespace BancoChu.Infra.Migrations
                 column: "ContaDestinoId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Transacoes_ContaOrigemId",
+                name: "IX_Transacoes_ContaOrigemId_ContaDestinoId",
                 table: "Transacoes",
-                column: "ContaOrigemId");
+                columns: new[] { "ContaOrigemId", "ContaDestinoId" });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
