@@ -22,14 +22,19 @@ Este repositório contém uma aplicação de desafio para a empresa BMP, desenvo
 
 ### Rodando com Docker
 
-1. Certifique-se de que Docker e Docker Compose estão instalados. Caso não tenha, pode baixá-lo por [aqui](https://docs.docker.com/get-started/get-docker/)
-2. Clone o repositório
-3. No diretório raiz do projeto, execute:
+1. Certifique-se de que Docker e Docker Compose estão instalados.
+   ```
+   docker --version
+   docker-compose --version
+   ```
+2. Caso não tenha, pode baixá-lo por [aqui](https://docs.docker.com/get-started/get-docker/)
+3. Clone o repositório
+4. No diretório raiz do projeto, execute:
    ```
    docker-compose up --build
    ```
-4. A aplicação estará disponível em http://localhost:5000/swagger ou https://localhost:5001/swagger
-5. A porta padrão configurada é 5000 (http) e 5001 (https) você pode configurar a porta que deseja nos arquivos `.yml`.
+5. A aplicação estará disponível em http://localhost:5000/swagger ou https://localhost:5001/swagger
+6. A porta padrão configurada é 5000 (http) e 5001 (https) você pode configurar a porta que deseja nos arquivos `.yml`.
 
 ### Rodando localmente
 
