@@ -48,8 +48,8 @@ public class TransacoesHandler : ITransacoesHandler
 		}
 
 		// Atualiza o saldo das contas
-		contaOrigem.Saldo += -command.Valor;
-		contaDestino.Saldo += command.Valor;
+		contaOrigem.AlterarSaldo(contaOrigem.Saldo + (-command.Valor));
+		contaDestino.AlterarSaldo(contaDestino.Saldo + command.Valor);
 
 		// Anexa as contas ao contexto para serem modificados
 		var contas = new List<Conta>

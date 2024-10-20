@@ -23,7 +23,9 @@ public class Conta : EntidadeBase
     [Required]
     public string Titular { get; init; }
 
-    public decimal Saldo { get; set; } = 0;
+    public decimal Saldo { get; private set; } = 0;
 
     public bool TemSaldoSuficiente(decimal valorTransferencia) => Saldo >= valorTransferencia;
+
+    public void AlterarSaldo(decimal novoSaldo) => Saldo = novoSaldo;
 }
