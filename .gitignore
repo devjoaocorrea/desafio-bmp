@@ -484,3 +484,13 @@ $RECYCLE.BIN/
 
 *.db*
 *.container*
+
+# .NET Environment
+bin/
+obj/
+.vs/
+*.user
+*.suo
+app.Development.json
+*.log
+*.db
