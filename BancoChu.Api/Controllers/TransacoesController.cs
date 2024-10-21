@@ -48,8 +48,6 @@ public class TransacoesController : ControllerBase
 	[HttpGet("extrato")]
 	public async Task<IActionResult> ObterTransacoesPorPeriodo(DateTime dataInicio, DateTime dataFim)
 	{
-		List<TransacaoResponse> result;
-
 		if (!_cache.TryGetValue(CacheKeys.Extrato, out List<TransacaoResponse> transacoes))
 		{
 			if (dataInicio > dataFim)
@@ -61,12 +59,14 @@ public class TransacoesController : ControllerBase
 			dataFim = DateTime.SpecifyKind(dataFim, DateTimeKind.Utc);
 			dataFim = dataFim.AddDays(1).AddTicks(-1);
 
-			result = await _repository.BuscarTransacoesPorPeriodo(dataInicio, dataFim);
+			transacoes = await _repository.BuscarTransacoesPorPeriodo(dataInicio, dataFim);
 
-			if (!result.Any())
+			if (!transacoes.Any())
 			{
 				return NotFound("Nenhuma transação realizada nesse período");
 			}
+
+			transacoes.ForEach(x => x.FormatarMensagem());
 
 			_cache.Set(CacheKeys.Extrato, transacoes,
 				new MemoryCacheEntryOptions()

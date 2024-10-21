@@ -10,4 +10,9 @@ public class TransacaoResponse
     public decimal Valor { get; set; }
     public string DataTransacao { get; set; }
 
+	public void FormatarMensagem()
+	{
+        IsOk = true;
+        Mensagem = "Transferência realizada com sucesso.";
+	}
 }
