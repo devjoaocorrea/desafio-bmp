@@ -28,7 +28,9 @@ public class ContasController : ControllerBase
             command.NumeroConta,
             command.Agencia,
             command.Titular,
-            command.Saldo);
+            command.Documento,
+            command.Saldo,
+            command.ChavePix);
 
         var result = _validator.Validate(conta);
 

@@ -30,11 +30,11 @@ namespace BancoChu.Infra.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Agencia")
+                    b.Property<string>("AgenciaOrigem")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("NumeroConta")
+                    b.Property<string>("NumeroContaOrigem")
                         .IsRequired()
                         .HasColumnType("text");
 

@@ -13,20 +13,20 @@ public class ContasRepository : IContasRepository
         _context = context;
     }
 
-    public async Task<Conta> BuscarPorIdAsync(Guid id)
+    public async Task<Conta> BuscarPorNumeroEAgencia(string numero, string agencia)
     {
         return await _context.Contas
             .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.Id == id);
+            .FirstOrDefaultAsync(c =>
+                c.NumeroConta == numero
+				&& c.Agencia == agencia);
     }
 
-    public Task AtualizarSaldos(IEnumerable<Conta> contas)
+    public void AtualizarSaldos(IEnumerable<Conta> contas)
     {
         foreach (var conta in contas)
         {
             _context.Entry(conta).State = EntityState.Modified;
         }
-
-        return Task.CompletedTask;
     }
 }

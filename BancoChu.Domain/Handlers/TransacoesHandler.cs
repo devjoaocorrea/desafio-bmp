@@ -1,4 +1,5 @@
 ﻿using BancoChu.Domain.Entidades;
+using BancoChu.Domain.Enums;
 using BancoChu.Domain.Interfaces.Handlers;
 using BancoChu.Domain.Interfaces.Repositories;
 using BancoChu.Dto.Commands;
@@ -22,14 +23,14 @@ public class TransacoesHandler : ITransacoesHandler
 	public async Task<TransacaoResponse> Handle(TransacaoCommand command)
 	{
 		// Busca a conta sem fazer tracking
-		var contaOrigem = await _contasRepository.BuscarPorIdAsync(command.ContaOrigemId);
+		var contaOrigem = await _contasRepository.BuscarPorNumeroEAgencia(command.NumeroContaOrigem, command.AgenciaOrigem);
 
 		if (contaOrigem is null)
 		{
 			return InvalidResponse("Conta origem não encontrada");
 		}
 
-		var contaDestino = await _contasRepository.BuscarPorIdAsync(command.ContaDestinoId);
+		var contaDestino = await _contasRepository.BuscarPorNumeroEAgencia(command.NumeroContaDestino, command.AgenciaDestino);
 
 		if (contaDestino is null)
 		{
@@ -57,12 +58,12 @@ public class TransacoesHandler : ITransacoesHandler
 			contaOrigem,
 			contaDestino
 		};
-		await _contasRepository.AtualizarSaldos(contas);
+		_contasRepository.AtualizarSaldos(contas);
 
 		Transacao transacao = new(
-			command.ContaOrigemId,
+			contaOrigem.Id,
 			contaOrigem,
-			command.ContaDestinoId,
+			contaDestino.Id,
 			contaDestino,
 			command.Valor,
 			command.DataTransacao);

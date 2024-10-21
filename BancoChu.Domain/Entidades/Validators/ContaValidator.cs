@@ -23,5 +23,8 @@ public class ContaValidator : AbstractValidator<Conta>
 			.GreaterThan(0)
 			.WithMessage("O valor do saldo não pode ser negativo ao criar a conta");
 
+		RuleFor(x => x.Documento)
+			.NotEmpty()
+			.WithMessage("A precisa ter um documento");
 	}
 }

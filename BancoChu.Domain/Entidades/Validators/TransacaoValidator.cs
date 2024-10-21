@@ -11,12 +11,20 @@ public class TransacaoValidator : AbstractValidator<TransacaoCommand>
 			.GreaterThan(0)
 			.WithMessage("Não pode realizar uma transação com o valor zerado");
 
-		RuleFor(x => x.ContaOrigemId)
+		RuleFor(x => x.NumeroContaOrigem)
 			.NotEmpty()
-			.WithMessage("Conta de origem não informada");
+			.WithMessage("Número da conta origem não informado");
 		
-		RuleFor(x => x.ContaDestinoId)
+		RuleFor(x => x.AgenciaOrigem)
 			.NotEmpty()
-			.WithMessage("Conta de destino não informada");
+			.WithMessage("Agência origem não informada");
+
+		RuleFor(x => x.NumeroContaDestino)
+			.NotEmpty()
+			.WithMessage("Número da conta destino não informado");
+
+		RuleFor(x => x.AgenciaDestino)
+			.NotEmpty()
+			.WithMessage("Agência destino não informada");
 	}
 }

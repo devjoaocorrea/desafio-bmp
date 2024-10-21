@@ -3,7 +3,6 @@ using BancoChu.Domain.Interfaces.Handlers;
 using BancoChu.Domain.Interfaces.Repositories;
 using BancoChu.Dto.Commands;
 using BancoChu.Dto.Responses;
-using BancoChu.Infra;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -15,21 +14,18 @@ namespace BancoChu.Api.Controllers;
 public class TransacoesController : ControllerBase
 {
 	private readonly IMemoryCache _cache;
-	private readonly BancoChuContext _context;
 	private readonly ITransacoesHandler _handler;
 	private readonly ITransacoesRepository _repository;
 	private readonly IValidator<TransacaoCommand> _validator;
 
 	public TransacoesController(
 		IMemoryCache cache,
-		BancoChuContext context,
 		ITransacoesHandler handler,
 		ITransacoesRepository repository,
 		IValidator<TransacaoCommand> validator)
 
 	{
 		_cache = cache;
-		_context = context;
 		_handler = handler;
 		_validator = validator;
 		_repository = repository;
@@ -52,6 +48,8 @@ public class TransacoesController : ControllerBase
 	[HttpGet("extrato")]
 	public async Task<IActionResult> ObterTransacoesPorPeriodo(DateTime dataInicio, DateTime dataFim)
 	{
+		List<TransacaoResponse> result;
+
 		if (!_cache.TryGetValue(CacheKeys.Extrato, out List<TransacaoResponse> transacoes))
 		{
 			if (dataInicio > dataFim)
@@ -63,16 +61,16 @@ public class TransacoesController : ControllerBase
 			dataFim = DateTime.SpecifyKind(dataFim, DateTimeKind.Utc);
 			dataFim = dataFim.AddDays(1).AddTicks(-1);
 
-			var transacoesDoPeriodo = await _repository.BuscarTransacoesPorPeriodo(dataInicio, dataFim);
+			result = await _repository.BuscarTransacoesPorPeriodo(dataInicio, dataFim);
 
-			if (!transacoesDoPeriodo.Any())
+			if (!result.Any())
 			{
 				return NotFound("Nenhuma transação realizada nesse período");
 			}
 
 			_cache.Set(CacheKeys.Extrato, transacoes,
 				new MemoryCacheEntryOptions()
-					.SetAbsoluteExpiration(TimeSpan.FromSeconds(60)));
+					.SetAbsoluteExpiration(TimeSpan.FromSeconds(10)));
 		}
 
 		return Ok(transacoes);

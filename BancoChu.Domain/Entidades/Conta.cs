@@ -1,31 +1,32 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace BancoChu.Domain.Entidades;
+﻿namespace BancoChu.Domain.Entidades;
 
 public class Conta : EntidadeBase
 {
-    public Conta(string numeroConta, string agencia, string titular, decimal saldo)
-    {
-        NumeroConta = numeroConta;
-        Agencia = agencia;
-        Titular = titular;
-        Saldo = saldo;
-    }
+	public Conta(string numeroConta, string agencia, string titular, string documento, decimal saldo, string chavePix = null)
+	{
+		NumeroConta = numeroConta;
+		Agencia = agencia;
+		Titular = titular;
+		Saldo = saldo;
+		Documento = documento;
+		ChavePix = chavePix;
+	}
 
-    public Conta() { }
+	public Conta() { }
 
-    [Required]
-    public string NumeroConta { get; init; }
+	public string NumeroConta { get; init; }
 
-    [Required]
-    public string Agencia { get; init; }
+	public string Agencia { get; init; }
 
-    [Required]
-    public string Titular { get; init; }
+	public string Titular { get; init; }
 
-    public decimal Saldo { get; private set; } = 0;
+	public string Documento { get; init; }
 
-    public bool TemSaldoSuficiente(decimal valorTransferencia) => Saldo >= valorTransferencia;
+	public string ChavePix { get; init; }
 
-    public void AlterarSaldo(decimal novoSaldo) => Saldo = novoSaldo;
+	public decimal Saldo { get; private set; } = 0;
+
+	public bool TemSaldoSuficiente(decimal valorTransferencia) => Saldo >= valorTransferencia;
+
+	public void AlterarSaldo(decimal novoSaldo) => Saldo = novoSaldo;
 }

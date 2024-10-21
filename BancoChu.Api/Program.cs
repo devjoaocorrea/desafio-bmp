@@ -17,7 +17,7 @@ builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddMemoryCache();
 
 // Aplica injecoes de dependencia
-builder.Services.AddServices();
+builder.Services.AddServices(builder.Configuration);
 
 builder.Services.AddDbContext<BancoChuContext>(options =>
 	options.UseNpgsql(builder.Configuration.GetConnectionString("Database")));

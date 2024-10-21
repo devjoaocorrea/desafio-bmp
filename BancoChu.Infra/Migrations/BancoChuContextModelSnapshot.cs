@@ -28,11 +28,18 @@ namespace BancoChu.Infra.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Agencia")
+                    b.Property<string>("AgenciaOrigem")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("NumeroConta")
+                    b.Property<string>("ChavePix")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Documento")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NumeroContaOrigem")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -41,7 +48,8 @@ namespace BancoChu.Infra.Migrations
 
                     b.Property<string>("Titular")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)");
 
                     b.HasKey("Id");
 
@@ -64,7 +72,8 @@ namespace BancoChu.Infra.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Mensagem")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<bool>("Sucesso")
                         .HasColumnType("boolean");
